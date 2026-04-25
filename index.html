@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Aizen - Chatbot</title>
+
+  <style>
+    /* Corpo da página */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #e5ddd5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Container do chat */
+    .chat-container {
+      background-color: #fff;
+      border-radius: 10px;
+      width: 360px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    /* Cabeçalho */
+    .chat-header {
+      background-color: #075E54;
+      color: white;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      font-size: 18px;
+    }
+
+    .chat-header .bot-name {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    /* Área de mensagens */
+    .chat-box {
+      flex-grow: 1;
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Mensagem do usuário */
+    .message.user {
+      align-self: flex-end;
+      background-color: #dcf8c6;
+      max-width: 75%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    /* Mensagem do Aizen */
+    .message.aizen {
+      align-self: flex-start;
+      background-color: #f1f0f0;
+      max-width: 75%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 10px;
+      position: relative;
+    }
+
+    /* Caixa de input */
+    .input-container {
+      display: flex;
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #ddd;
+    }
+
+    .input-container input {
+      width: 80%;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ddd;
+      font-size: 16px;
+      outline: none;
+      margin-right: 10px;
+    }
+
+    .input-container button {
+      padding: 10px;
+      background-color: #075E54;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .input-container button:hover {
+      background-color: #128C7E;
+    }
+
+    /* Animação de nova mensagem */
+    .message {
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Scroll da área de mensagens */
+    .chat-box::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-box::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    .chat-box::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="bot-name">Aizen - Chatbot</div>
+    </div>
+    <div class="chat-box" id="chat-box">
+      <!-- Mensagens aparecerão aqui -->
+    </div>
+    <div class="input-container">
+      <input type="text" id="pergunta" placeholder="Digite sua pergunta..." onkeydown="if(event.key === 'Enter'){enviar();}">
+      <button onclick="enviar()">🗣️</button>
+    </div>
+  </div>
+
+  <script>
+    // Função para adicionar mensagens ao chat
+    function adicionarMensagem(role, mensagem) {
+      const chatBox = document.getElementById('chat-box');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', role);
+      messageDiv.textContent = mensagem;
+      chatBox.appendChild(messageDiv);
+      chatBox.scrollTop = chatBox.scrollHeight; // Rola para o final
+    }
+
+    // Função para enviar a pergunta e pegar a resposta
+    async function enviar() {
+      const perguntaInput = document.getElementById("pergunta");
+      const pergunta = perguntaInput.value.trim();
+
+      if (!pergunta) return;
+
+      // Adiciona a pergunta do usuário
+      adicionarMensagem('user', pergunta);
+
+      // Limpa o campo de entrada
+      perguntaInput.value = '';
+
+      // Adiciona a mensagem de "pensando"
+      adicionarMensagem('aizen', "Pensando... ⏳");
+
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ pergunta })
+        });
+
+        const data = await response.json();
+        const resposta = data.resposta || "Não consegui entender sua pergunta.";
+
+        // Atualiza a resposta do Aizen
+        const messages = document.querySelectorAll(".message.aizen");
+        messages[messages.length - 1].textContent = resposta;
+
+      } catch (error) {
+        console.error("Erro ao obter a resposta:", error);
+        const messages = document.querySelectorAll(".message.aizen");
+        messages[messages.length - 1].textContent = "Erro ao consultar a IA.";
+      }
+    }
+  </script>
+
+</body>
+</html>
